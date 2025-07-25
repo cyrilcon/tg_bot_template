@@ -1,0 +1,43 @@
+services:
+  tg_bot:
+    image: tg_bot_image
+    container_name: tg_bot
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /usr/src/app/tg_bot
+    command: python -m main
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    networks:
+      - tg_bot_network
+    stop_signal: SIGTERM
+    logging:
+      driver: json-file
+      options:
+        max-size: 200k
+        max-file: 10
+
+  redis:
+    image: redis:alpine
+    container_name: tg_bot_redis
+    restart: always
+    command: redis-server --port ${REDIS__PORT} --loglevel warning --requirepass ${REDIS__PASSWORD}
+    env_file:
+      - .env
+    volumes:
+      - tg_bot_redis_volume:/data
+    networks:
+      - tg_bot_network
+
+networks:
+  tg_bot_network:
+    name: tg_bot_network
+    driver: bridge
+
+volumes:
+  tg_bot_redis_volume:
+    name: tg_bot_redis_volume
